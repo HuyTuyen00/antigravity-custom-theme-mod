@@ -48,15 +48,16 @@ Hệ thống vận hành theo mô hình hai lớp tách biệt nhằm giữ ổn
 ### Bước 1: Tải mã nguồn
 
 ```bash
-git clone https://github.com/furinamikuvn/antigravity-custom-theme-mod.git
+git clone https://github.com/HuyTuyen00/antigravity-custom-theme-mod.git
 cd antigravity-custom-theme-mod
 ```
 
 ### Bước 2: Biên dịch gói giao diện (`dist/theme_payload.js`)
 
 ```bash
-python scripts/build_payload.py
+node scripts/build_payload.js
 ```
+*(hoặc dùng `python scripts/build_payload.py`)*
 
 Kiểm tra nhanh cú pháp sau khi biên dịch:
 
