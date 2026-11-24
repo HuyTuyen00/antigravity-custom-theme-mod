@@ -1,4 +1,32 @@
 (() => {
+  // Prevent any white flash or unthemed UI on startup before CSS parses
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.style.backgroundColor = '#000000';
+    document.documentElement.style.colorScheme = 'dark';
+    try {
+      document.documentElement.style.setProperty('--background', '#000000');
+    } catch (_) {}
+    if (!document.getElementById('agy-instant-dark-curtain')) {
+      const instantCurtain = document.createElement('style');
+      instantCurtain.id = 'agy-instant-dark-curtain';
+      instantCurtain.textContent = `
+        html, html body {
+          background-color: #000000 !important;
+          background: #000000 !important;
+          color-scheme: dark !important;
+          --background: #000000 !important;
+        }
+        #agy-boot-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 2147483647 !important;
+          background: #000000 !important;
+        }
+      `;
+      (document.head || document.documentElement).appendChild(instantCurtain);
+    }
+  }
+
   const THEMES = /*__THEMES_PLACEHOLDER__*/{};
   const BOOT_ASSETS = /*__BOOT_ASSETS_PLACEHOLDER__*/{};
   const THEME_KEYS = Object.keys(THEMES);
@@ -26,6 +54,7 @@
   const STORAGE_BOOT_INTRO = 'agy_boot_intro_v3';
   const STORAGE_SKETCH_REVEAL = 'agy_sketch_reveal_v3';
   const STORAGE_TAWA_GREETING = 'agy_tawa_greeting_v3';
+  const STORAGE_USER_NAME = 'agy_user_name_v3';
   const GREETING_RX = /^(?:Hey\s+[^,]{1,40},\s+what\s+should\s+we\s+build\s+today\??|Good\s+to\s+see\s+you,\s+[^.]{1,40}\.\s+What'?s\s+next\??|What\s+(?:should|are)\s+we\s+build(?:ing)?\s+today\??|Welcome\s+back[,.!\s]+[^.!?]{0,40}(?:[.!?]\s*(?:Where\s+should\s+we\s+pick\s+up|What'?s\s+next|What\s+should\s+we\s+build)[^.!?]{0,40}[.!?]?)?|Where\s+should\s+we\s+pick\s+up\??|Ready\s+(?:to\s+build|when\s+you\s+are)[,.!\s]*.*)$/i;
   const DEFAULT_CUSTOM_GREETINGS = [];
 
@@ -317,12 +346,16 @@
     const tawaGreeting = localStorage.getItem(STORAGE_TAWA_GREETING) !== null
       ? localStorage.getItem(STORAGE_TAWA_GREETING) !== 'false'
       : (init.tawaGreeting !== undefined ? init.tawaGreeting : true);
+    const rawUserName = localStorage.getItem(STORAGE_USER_NAME) ?? init.userName;
+    const userName = (rawUserName !== undefined && rawUserName !== null && String(rawUserName).trim())
+      ? String(rawUserName).trim()
+      : 'OPERATOR';
     return {
       themeName, bubbleName, inputStyle, dimming, wpEnabled, wpMode,
       customWp, customVideo, savedImages, savedVideos,
       taskVoices, taskVoiceEnabled, taskVoiceVol, customGreetings,
       userAvatar, agentAvatar, glassBlur, avatarSize, avatarRadius,
-      bootIntro, sketchReveal, tawaGreeting
+      bootIntro, sketchReveal, tawaGreeting, userName
     };
   }
 
@@ -1409,6 +1442,8 @@
 
     const starfieldUrl = sanitizeCssUrl(BOOT_ASSETS.starfieldBg || resolveMediaUrl('assets/starfield-boot-bg.jpg'));
     const iconColorUrl = BOOT_ASSETS.agyColorIcon || resolveMediaUrl('assets/agy-icon-color.png');
+    const userName = (st.userName && st.userName.trim()) ? st.userName.trim() : 'OPERATOR';
+    const upperUser = escapeHtml(userName.toUpperCase());
     const voiceUrls = {
       1: BOOT_ASSETS.voice1 || resolveMediaUrl('assets/voice/tawa_voice1.mp3'),
       2: BOOT_ASSETS.voice2 || resolveMediaUrl('assets/voice/tawa_voice2.mp3'),
@@ -1627,11 +1662,11 @@
       #agy-boot-overlay .agy-eq-bars span:nth-child(3) { animation-delay: 0.4s; }
       @keyframes agyEqPulse { from { height: 3px; opacity: 0.45; } to { height: 11px; opacity: 1; } }
     `;
-    document.head.appendChild(bootStyle);
+    (document.head || document.documentElement).appendChild(bootStyle);
 
     const flashCurtain = document.createElement('div');
     flashCurtain.id = 'agy-flash-curtain';
-    document.body.appendChild(flashCurtain);
+    (document.body || document.documentElement).appendChild(flashCurtain);
 
     const overlay = document.createElement('section');
     overlay.id = 'agy-boot-overlay';
@@ -1645,11 +1680,9 @@
       <header class="agy-boot-header">
         <div class="agy-boot-brand">
           <strong>ANTIGRAVITY</strong>
-          <span class="sub-line">SYNTHESIZE INTELLIGENCE</span>
+          <span class="sub-line">FUSION BURST</span>
           <div class="agy-boot-rev">
-            <span>REV 0.1.9</span>
-            <span>•</span>
-            <span class="blue-rev" id="agy-hud-clock">WEB PROFILE 00:00:00</span>
+            <span>${upperUser} EDITION</span>
           </div>
         </div>
         <button class="agy-boot-skip" id="agy-boot-skip" type="button">SKIP ▸</button>
@@ -1659,35 +1692,29 @@
         <div class="agy-boot-stage active" id="agy-stage-0">
           <img class="agy-splash-logo" id="agy-splash-logo" src="${iconColorUrl}" alt="Antigravity" />
           <div class="agy-splash-wordmark">ANTIGRAVITY</div>
-          <div class="agy-splash-caption">SYNTHESIZE INTELLIGENCE</div>
+          <div class="agy-splash-caption">FUSION BURST</div>
         </div>
 
         <div class="agy-boot-stage" id="agy-stage-1">
-          <div style="margin-bottom:6px"><span class="agy-hud-title" data-stagger="26">YÊU CẦU QUYỀN TRUY CẬP</span></div>
-          <div class="agy-hud-subtitle" data-stagger="14">ACCESS PERMISSION REQUIRED</div>
+          <div style="margin-bottom:20px"><span class="agy-hud-title" data-stagger="26">CHÀO MỪNG ${upperUser}</span></div>
+          <div class="agy-id-table">
+            <div class="agy-id-row"><span>NGƯỜI DÙNG</span><span>${upperUser}</span></div>
+            <div class="agy-id-row"><span>PHIÊN BẢN</span><span>FUSION BURST</span></div>
+            <div class="agy-id-row"><span>TRẠNG THÁI</span><span>SẴN SÀNG</span></div>
+          </div>
           <button class="agy-hud-btn" id="agy-btn-grant" type="button">
-            <span>CẤP QUYỀN &nbsp; GRANT ACCESS</span>
+            <span>BẮT ĐẦU</span>
           </button>
-          <div class="agy-hud-hint">Nhấn Enter / Space hoặc bấm nút để tiếp tục</div>
+          <div class="agy-hud-hint">Nhấn Enter hoặc Space để bắt đầu</div>
         </div>
 
-        <div class="agy-boot-stage" id="agy-stage-2">
-          <div style="margin-bottom:6px"><span class="agy-hud-title" data-stagger="26">XÁC MINH DANH TÍNH</span></div>
-          <div class="agy-hud-subtitle" data-stagger="14">IDENTITY VERIFICATION</div>
-          <div class="agy-id-table">
-            <div class="agy-id-row"><span>TÊN TRUY CẬP / OPERATOR</span><span>SENSEI</span></div>
-            <div class="agy-id-row"><span>MÃ ĐỊNH DANH / UID</span><span>0042</span></div>
-            <div class="agy-id-row"><span>CẤP QUYỀN / LEVEL</span><span>∞</span></div>
-          </div>
-          <button class="agy-hud-btn" id="agy-btn-confirm" type="button">
-            <span>XÁC NHẬN &nbsp; CONFIRM IDENTITY</span>
-          </button>
-          <div class="agy-hud-hint">Nhấn Enter / Space hoặc bấm nút để xác nhận</div>
+        <div class="agy-boot-stage" id="agy-stage-2" style="display:none">
+          <button class="agy-hud-btn" id="agy-btn-confirm" type="button" style="display:none"><span>BẮT ĐẦU</span></button>
         </div>
 
         <div class="agy-boot-stage" id="agy-stage-morph">
-          <div style="margin-bottom:6px"><span class="agy-hud-title" id="agy-morph-title" data-stagger="16">ĐANG TIẾP NHẬN YÊU CẦU</span></div>
-          <div class="agy-hud-subtitle" id="agy-morph-sub" data-stagger="10" style="margin-bottom:10px">ACCESS REQUEST RECEIVED</div>
+          <div style="margin-bottom:6px"><span class="agy-hud-title" id="agy-morph-title" data-stagger="16">KHỞI CHẠY HỆ THỐNG</span></div>
+          <div class="agy-hud-subtitle" id="agy-morph-sub" data-stagger="10" style="margin-bottom:10px">INITIALIZING WORKSPACE</div>
           <div class="agy-icon-morph-box">
             <svg class="agy-icon-outline-svg" id="agy-icon-outline-svg" viewBox="0 0 256 256">
               <defs>
@@ -1726,20 +1753,19 @@
               <div class="agy-orbit-dot w" style="bottom:24%;right:28%"></div>
             </div>
             <div>
-              <div class="agy-hud-title" data-stagger="24" style="font-size:17px;letter-spacing:0.1em;margin-bottom:6px">HOÀN TẤT · ĐÃ XÁC THỰC</div>
-              <div class="agy-hud-subtitle" data-stagger="14" style="margin-bottom:0;font-size:9px;letter-spacing:0.24em">READ COMPLETE · VERIFIED</div>
+              <div class="agy-hud-title" data-stagger="24" style="font-size:17px;letter-spacing:0.1em;margin-bottom:6px">ĐÃ SẴN SÀNG · CHÀO ${upperUser}</div>
+              <div class="agy-hud-subtitle" data-stagger="14" style="margin-bottom:0;font-size:9px;letter-spacing:0.24em">WORKSPACE READY</div>
             </div>
           </div>
         </div>
 
         <div class="agy-boot-stage" id="agy-stage-6">
-          <div class="agy-welcome-eyebrow" data-stagger="28">WELCOME TO</div>
-          <div class="agy-welcome-solid-box agy-welcome-reveal" style="animation-delay:240ms">ANTIGRAVITY</div>
+          <div class="agy-welcome-eyebrow" data-stagger="28">CHÀO MỪNG TRỞ LẠI</div>
+          <div class="agy-welcome-solid-box agy-welcome-reveal" style="animation-delay:240ms">${upperUser}</div>
           <div class="agy-welcome-flare-wrap agy-welcome-reveal" style="animation-delay:360ms">
             <img src="${iconColorUrl}" alt="Antigravity" />
           </div>
-          <div class="agy-dot-grid-small agy-welcome-reveal" style="margin-bottom:8px;animation-delay:460ms">A N T I G R A V I T Y</div>
-          <div class="agy-hud-hint agy-welcome-reveal" style="color:#a1a1aa;letter-spacing:0.2em;animation-delay:540ms">CHÀO MỪNG SENSEI • SESSION READY</div>
+          <div class="agy-dot-grid-small agy-welcome-reveal" style="margin-bottom:8px;animation-delay:460ms">F U S I O N · B U R S T</div>
         </div>
       </div>
 
@@ -1748,16 +1774,27 @@
       <footer class="agy-boot-footer">
         <div style="display:flex;align-items:center">
           <div class="agy-eq-bars"><span></span><span></span><span></span></div>
-          <span id="agy-boot-step-label">[ 01 / 06 ] AUTHORIZATION</span>
+          <span id="agy-boot-step-label">[ 01 · 06 ] AUTHORIZATION</span>
         </div>
-        <span id="agy-boot-status-bottom">AWAITING OPERATOR CONSENT</span>
-        <span>ID CONFIRMED : 0042</span>
+        <span id="agy-boot-status-bottom">SYSTEM READY</span>
+        <span>${upperUser} · FUSION BURST</span>
         <div class="agy-bottom-progress-track">
           <div class="agy-bottom-progress-bar" id="agy-bottom-progress"></div>
         </div>
       </footer>
     `;
-    document.body.appendChild(overlay);
+    (document.body || document.documentElement).appendChild(overlay);
+
+    if (!document.body) {
+      const bodyObserver = new MutationObserver(() => {
+        if (document.body) {
+          bodyObserver.disconnect();
+          if (flashCurtain && flashCurtain.parentNode !== document.body) document.body.appendChild(flashCurtain);
+          if (overlay && overlay.parentNode !== document.body) document.body.appendChild(overlay);
+        }
+      });
+      bodyObserver.observe(document.documentElement, { childList: true });
+    }
 
     const splashSheen = document.getElementById('agy-splash-sheen');
     const hudScanline = document.getElementById('agy-hud-scanline');
@@ -1873,23 +1910,23 @@
         }
       }
       const meta = [
-        ['[ 00 / 06 ] INITIALIZING', 'LOADING KERNEL...', 10],
-        ['[ 01 / 06 ] AUTHORIZATION', 'AWAITING OPERATOR CONSENT', 24],
-        ['[ 02 / 06 ] IDENTITY CHECK', 'UID 0042 / LEVEL ∞ READY', 42],
-        ['[ 03 / 06 ] ACCESS VECTOR', 'SYNCHRONIZING NEURAL CORE', 58],
-        ['[ 04 / 06 ] PERMISSION STREAM', 'STREAMING CLEARANCE KEYS', 74],
-        ['[ 05 / 06 ] VERIFY', 'PERMISSION AUTHORIZED', 90],
-        ['[ 06 / 06 ] WELCOME', 'SENSEI SESSION ACTIVE', 100]
+        ['[ 01 · 04 ] KHỞI ĐỘNG', 'SYSTEM READY', 15],
+        ['[ 02 · 04 ] TÀI KHOẢN', `${upperUser} · FUSION BURST`, 40],
+        ['[ 03 · 04 ] TẢI DỮ LIỆU', 'LOADING WORKSPACE...', 65],
+        ['[ 04 · 04 ] HOÀN TẤT', 'SẴN SÀNG', 100]
       ];
-      stepLabel.textContent = meta[idx][0];
-      statusBottom.textContent = meta[idx][1];
-      bottomProgress.style.width = `${meta[idx][2]}%`;
+      const mIdx = Math.min(idx, meta.length - 1);
+      stepLabel.textContent = meta[mIdx][0];
+      statusBottom.textContent = meta[mIdx][1];
+      bottomProgress.style.width = `${meta[mIdx][2]}%`;
     }
 
     function finishBoot(instant = false) {
       clearBootTimers();
       startHexStream(false);
       window.__AGY_BOOT_FINISHED__ = true;
+      const instantCurtain = document.getElementById('agy-instant-dark-curtain');
+      if (instantCurtain) instantCurtain.remove();
       if (instant) {
         stopBootAudio();
         overlay.classList.add('done', 'instant');
@@ -1911,10 +1948,10 @@
     }
 
     function runAutoSequenceAfterConfirm() {
-      morphTitle.dataset.rawText = 'ĐANG TIẾP NHẬN YÊU CẦU';
-      morphTitle.textContent = 'ĐANG TIẾP NHẬN YÊU CẦU';
-      morphSub.dataset.rawText = 'ACCESS REQUEST RECEIVED';
-      morphSub.textContent = 'ACCESS REQUEST RECEIVED';
+      morphTitle.dataset.rawText = 'KHỞI CHẠY HỆ THỐNG';
+      morphTitle.textContent = 'KHỞI CHẠY HỆ THỐNG';
+      morphSub.dataset.rawText = 'INITIALIZING WORKSPACE';
+      morphSub.textContent = 'INITIALIZING WORKSPACE';
       iconOutlineSvg.classList.remove('fade-stroke');
       colorFillImg.classList.remove('filled');
       outlinePath.classList.remove('trace');
@@ -1930,38 +1967,37 @@
         fillPhaseStarted = true;
 
         // Fill immediately on stroke completion while swapping the caption concurrently
-        morphTitle.dataset.rawText = 'BẮT ĐẦU ĐỌC QUYỀN HẠN';
-        morphTitle.textContent = 'BẮT ĐẦU ĐỌC QUYỀN HẠN';
-        morphSub.dataset.rawText = 'PERMISSION READ STARTED';
-        morphSub.textContent = 'PERMISSION READ STARTED';
+        morphTitle.dataset.rawText = 'TẢI DỮ LIỆU FUSION BURST';
+        morphTitle.textContent = 'TẢI DỮ LIỆU FUSION BURST';
+        morphSub.dataset.rawText = 'LOADING WORKSPACE ASSETS';
+        morphSub.textContent = 'LOADING WORKSPACE ASSETS';
         showStage(4, true);
         startHexStream(true);
         void colorFillImg.offsetWidth;
         colorFillImg.classList.add('filled');
         playClickSfx(620, 0.05, 0.04);
 
-        window.__AGY_BOOT_TIMERS__.push(setTimeout(() => iconOutlineSvg.classList.add('fade-stroke'), 520));
+        window.__AGY_BOOT_TIMERS__.push(setTimeout(() => iconOutlineSvg.classList.add('fade-stroke'), 420));
 
         window.__AGY_BOOT_TIMERS__.push(setTimeout(() => {
           startHexStream(false);
           showStage(5, true);
           triggerScanline();
           playClickSfx(780, 0.08, 0.05);
-          playTawaVoice(3);
-        }, 1250));
+        }, 900));
 
         window.__AGY_BOOT_TIMERS__.push(setTimeout(() => {
           const st5 = document.getElementById('agy-stage-5');
           if (st5) st5.classList.add('stage-fade-out');
-        }, 2950));
+        }, 2200));
 
         window.__AGY_BOOT_TIMERS__.push(setTimeout(() => {
           showStage(6, true);
           playClickSfx(880, 0.1, 0.045);
-          playTawaVoice(4);
-        }, 3620));
+          playTawaVoice(4); // "Issho ni sekai wo sukuimashou!" (Together, let's save the world!)
+        }, 2700));
 
-        window.__AGY_BOOT_TIMERS__.push(setTimeout(() => finishBoot(false), 5850));
+        window.__AGY_BOOT_TIMERS__.push(setTimeout(() => finishBoot(false), 5600));
       };
 
       outlinePath.addEventListener('animationend', startColorFillStage, { once: true });
@@ -1972,7 +2008,7 @@
       const sec = Math.floor((performance.now() - bootStartMs) / 1000);
       const mm = String(Math.floor(sec / 60)).padStart(2, '0');
       const ss = String(sec % 60).padStart(2, '0');
-      hudClock.textContent = `WEB PROFILE 00:${mm}:${ss}`;
+      hudClock.textContent = `FUSION BURST 00:${mm}:${ss}`;
     }, 250);
 
     showStage(0, false);
@@ -1980,13 +2016,13 @@
       splashSheen.classList.remove('run');
       void splashSheen.offsetWidth;
       splashSheen.classList.add('run');
-    }, 1050));
+    }, 900));
 
     window.__AGY_BOOT_TIMERS__.push(setTimeout(() => {
       overlay.classList.add('hud-mode');
       showStage(1, true);
       triggerScanline();
-    }, 2600));
+    }, 2000));
 
     document.getElementById('agy-btn-grant').addEventListener('click', (e) => {
       if (currentStage !== 1) return;
@@ -1994,19 +2030,14 @@
       playClickSfx(680, 0.06, 0.05);
       playTawaVoice(1);
       const st1 = document.getElementById('agy-stage-1');
-      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => st1 && st1.classList.add('wipe-out'), 240));
-      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => showStage(2, true), 580));
+      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => st1 && st1.classList.add('wipe-out'), 200));
+      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => runAutoSequenceAfterConfirm(), 450));
     });
 
-    document.getElementById('agy-btn-confirm').addEventListener('click', (e) => {
-      if (currentStage !== 2) return;
-      e.currentTarget.classList.add('triggered');
-      playClickSfx(820, 0.06, 0.05);
-      playTawaVoice(2);
-      const st2 = document.getElementById('agy-stage-2');
-      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => st2 && st2.classList.add('wipe-out'), 240));
-      window.__AGY_BOOT_TIMERS__.push(setTimeout(() => runAutoSequenceAfterConfirm(), 580));
-    });
+    const confirmBtn = document.getElementById('agy-btn-confirm');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => runAutoSequenceAfterConfirm());
+    }
 
     document.getElementById('agy-boot-skip').addEventListener('click', () => finishBoot(true));
 
@@ -2021,8 +2052,7 @@
         } else if (currentStage === 2) {
           e.preventDefault();
           e.stopPropagation();
-          const btn = document.getElementById('agy-btn-confirm');
-          if (btn) btn.click();
+          runAutoSequenceAfterConfirm();
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -2125,6 +2155,9 @@
       if (overrides.avatarRadius !== undefined) {
         localStorage.setItem(STORAGE_AVATAR_RADIUS, String(overrides.avatarRadius));
       }
+      if (overrides.userName !== undefined) {
+        localStorage.setItem(STORAGE_USER_NAME, overrides.userName);
+      }
     } catch (e) {}
 
     if (window.agySaveThemeConfig) {
@@ -2146,7 +2179,7 @@
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'antigravity-custom-theme-active';
-      document.head.appendChild(styleEl);
+      (document.head || document.documentElement).appendChild(styleEl);
     }
 
     const overlayAlpha = mainTheme.clearBackdrop
@@ -2427,7 +2460,7 @@
       .agy-shell .bg-sidebar a,
       .agy-shell .bg-sidebar span,
       .agy-shell .bg-sidebar button {
-        color: ${isLight ? uiInk : 'inherit'};
+        color: ${isLight ? uiInk : (mainTheme.textColor || '#f8fafc')} !important;
         text-shadow: ${isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.88)'};
       }
       .agy-shell .bg-sidebar .text-muted-foreground,
@@ -2440,7 +2473,7 @@
       /* Translucent reading card for AI responses (zero live backdrop-filter for max 120fps scroll) */
       .agy-shell [data-testid="agent-response"] {
         background: ${mainTheme.aiCardBg} !important;
-        ${isLight ? `color: ${uiInk} !important;` : ''}
+        color: ${isLight ? uiInk : (mainTheme.textColor || '#f8fafc')} !important;
         backdrop-filter: none !important;
         border: 1px solid ${mainTheme.aiCardBorder || (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.1)')} !important;
         border-radius: 14px !important;
@@ -2448,6 +2481,232 @@
         box-shadow: ${isLight ? '0 4px 14px rgba(15, 23, 42, 0.08)' : '0 4px 14px rgba(0, 0, 0, 0.28)'} !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+      }
+      .agy-shell [data-testid="agent-response"] :is(p, li, span, h1, h2, h3, h4, h5, h6, strong, em, td, th),
+      .agy-shell [data-testid="user-message"],
+      .agy-shell [data-testid="user-message"] :is(p, li, span, h1, h2, h3, h4, h5, h6, strong, em, td, th),
+      .agy-shell .prose :is(p, li, span, h1, h2, h3, h4, h5, h6, strong, em, td, th) {
+        color: ${isLight ? uiInk : (mainTheme.textColor || '#f8fafc')} !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 7px rgba(0, 0, 0, 0.80) !important;
+      }
+      .agy-shell :not(pre) > code {
+        background: rgba(251, 191, 36, 0.18) !important;
+        color: #fbbf24 !important;
+        border: 1px solid rgba(251, 191, 36, 0.38) !important;
+        padding: 1.5px 6px !important;
+        border-radius: 5px !important;
+        font-weight: 500 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+      }
+
+      /* Global dark-mode variable override on .agy-shell for Light host */
+      .agy-shell {
+        --foreground: 248 250 252 !important;
+        --muted-foreground: 203 213 225 !important;
+        --secondary-foreground: 241 245 249 !important;
+        --card-foreground: 248 250 252 !important;
+        --popover-foreground: 248 250 252 !important;
+      }
+
+      /* All icons & svgs */
+      .agy-shell svg {
+        color: #f1f5f9 !important;
+      }
+      .bg-sidebar svg,
+      .bg-sidebar button svg {
+        color: ${mainTheme.primary || '#fb7185'} !important;
+      }
+      .bg-sidebar button:hover svg {
+        color: ${mainTheme.secondary || '#fbbf24'} !important;
+      }
+
+      /* Sidebar text, headers, and conversation items */
+      .bg-sidebar span,
+      .bg-sidebar a,
+      .bg-sidebar button,
+      .bg-sidebar div {
+        color: #f1f5f9 !important;
+      }
+      .bg-sidebar .text-muted-foreground,
+      .bg-sidebar [class*="text-muted"],
+      .bg-sidebar [class*="text-secondary"] {
+        color: #cbd5e1 !important;
+      }
+      .bg-sidebar .bg-sidebar-secondary,
+      .bg-sidebar .agy-sidebar-row:hover,
+      .bg-sidebar [class*="bg-sidebar-accent"] {
+        background: rgba(251, 113, 133, 0.22) !important;
+        border: 1px solid rgba(251, 113, 133, 0.45) !important;
+        color: #ffffff !important;
+      }
+
+      /* Bottom Composer Input, Textarea, and all Composer elements */
+      .surface-composer,
+      .surface-composer *,
+      .surface-composer textarea,
+      .surface-composer [contenteditable="true"],
+      .surface-composer input {
+        color: #f8fafc !important;
+      }
+      .surface-composer textarea::placeholder,
+      .surface-composer input::placeholder,
+      .surface-composer [data-placeholder]::before {
+        color: rgba(226, 232, 240, 0.65) !important;
+        -webkit-text-fill-color: rgba(226, 232, 240, 0.65) !important;
+      }
+      .surface-composer svg {
+        color: ${mainTheme.primary || '#fb7185'} !important;
+      }
+      .surface-composer button:hover svg {
+        color: ${mainTheme.secondary || '#fbbf24'} !important;
+      }
+
+      /* Queued messages card & pre-composer notifications */
+      [data-testid="queued-messages-card"],
+      [data-testid="agent-input-box"] > div:first-child,
+      [data-testid="agent-input-box"] [class*="hidden-if-empty"] > div,
+      div:has(+ .surface-composer) > div,
+      div:has(+ #antigravity\\.agentSidePanelInputBox) > div {
+        background: linear-gradient(135deg, rgba(24, 16, 38, 0.88) 0%, rgba(14, 10, 26, 0.94) 100%) !important;
+        border: 1px solid rgba(251, 113, 133, 0.45) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 12px rgba(251, 113, 133, 0.22) !important;
+        color: #f8fafc !important;
+        backdrop-filter: none !important;
+      }
+
+      [data-testid="queued-messages-card"] *,
+      [data-testid="agent-input-box"] > div:first-child *,
+      div:has(+ .surface-composer) * {
+        color: #f8fafc !important;
+      }
+
+      [data-testid="queued-messages-card"] svg,
+      [data-testid="agent-input-box"] > div:first-child svg,
+      div:has(+ .surface-composer) svg {
+        color: ${mainTheme.primary || '#fb7185'} !important;
+      }
+
+      [data-testid="queued-messages-card"] [class*="text-secondary"],
+      [data-testid="queued-messages-card"] [class*="text-muted"],
+      [data-testid="agent-input-box"] > div:first-child [class*="text-secondary"],
+      [data-testid="agent-input-box"] > div:first-child [class*="text-muted"] {
+        color: #cbd5e1 !important;
+      }
+
+      [data-testid="queued-messages-card"] button:hover svg,
+      div:has(+ .surface-composer) button:hover svg {
+        color: ${mainTheme.secondary || '#fbbf24'} !important;
+      }
+
+      [data-testid="queued-messages-card"] [class*="rounded-full"],
+      div:has(+ .surface-composer) [class*="rounded-full"] {
+        background: rgba(251, 113, 133, 0.25) !important;
+        color: ${mainTheme.primary || '#fb7185'} !important;
+        border: 1px solid rgba(251, 113, 133, 0.4) !important;
+      }
+
+      [data-testid="queued-messages-card"] [class*="bg-"] {
+        background: transparent !important;
+      }
+
+      /* Overview Panel & Gutter (top-right menu: Overview, Review, Files, Terminal, Plugins, Background Tasks) */
+      [data-testid="overview-panel-host-gutter"],
+      [data-testid="overview-panel-host-gutter"] > [data-testid="overview-panel"],
+      .animate-overview-panel {
+        background: linear-gradient(135deg, rgba(20, 14, 34, 0.92) 0%, rgba(12, 10, 24, 0.96) 100%) !important;
+        border: 1px solid rgba(251, 113, 133, 0.40) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(251, 113, 133, 0.18) !important;
+        color: #f8fafc !important;
+        backdrop-filter: none !important;
+      }
+
+      [data-testid="overview-panel-host-gutter"] *,
+      .animate-overview-panel * {
+        color: #f8fafc !important;
+      }
+
+      [data-testid="overview-panel-host-gutter"] svg,
+      .animate-overview-panel svg {
+        color: ${mainTheme.primary || '#fb7185'} !important;
+      }
+
+      [data-testid="overview-panel-host-gutter"] button:hover,
+      .animate-overview-panel button:hover {
+        background: rgba(251, 113, 133, 0.22) !important;
+        color: #ffffff !important;
+      }
+
+      [data-testid="overview-panel-host-gutter"] button:hover svg,
+      .animate-overview-panel button:hover svg {
+        color: ${mainTheme.secondary || '#fbbf24'} !important;
+      }
+
+      [data-testid="overview-panel-host-gutter"] .divide-border > * + *,
+      .animate-overview-panel .divide-border > * + * {
+        border-color: rgba(251, 113, 133, 0.20) !important;
+      }
+
+      /* Popovers, dropdowns, menus inside and outside shell */
+      .agy-shell [data-radix-popper-content-wrapper] > div,
+      .agy-shell [role="dialog"],
+      .agy-shell [role="menu"],
+      .agy-shell [role="tooltip"],
+      .agy-shell [data-radix-menu-content],
+      .agy-shell .bg-popover,
+      .agy-shell .bg-card:not([data-testid="user-message-bubble"]):not(.surface-composer-card):not(.surface-composer),
+      body > [data-radix-popper-content-wrapper] > div,
+      body > [role="dialog"],
+      body > [role="menu"],
+      [data-radix-popper-content-wrapper] > div {
+        background: linear-gradient(135deg, rgba(20, 14, 34, 0.94) 0%, rgba(12, 10, 24, 0.96) 100%) !important;
+        border: 1px solid rgba(251, 113, 133, 0.35) !important;
+        color: #f8fafc !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(251, 113, 133, 0.15) !important;
+        backdrop-filter: none !important;
+      }
+
+      [data-radix-popper-content-wrapper] *,
+      body > [role="dialog"] *,
+      body > [role="menu"] * {
+        color: #f8fafc !important;
+      }
+
+      /* Artifact & Review Strip ('files changed', 'Review' button) */
+      .agy-shell .review-button,
+      .agy-shell .review-button *,
+      .agy-shell [class*="review-button"],
+      .agy-shell [class*="review-button"] * {
+        color: #ffffff !important;
+        background-color: rgba(251, 113, 133, 0.25) !important;
+        border: 1px solid rgba(251, 113, 133, 0.5) !important;
+      }
+      .agy-shell .review-button:hover,
+      .agy-shell [class*="review-button"]:hover {
+        background-color: rgba(251, 191, 36, 0.35) !important;
+        border-color: rgba(251, 191, 36, 0.7) !important;
+      }
+      .agy-shell :has(> .review-button),
+      .agy-shell :has(> .review-button) * {
+        color: #f1f5f9 !important;
+      }
+
+      /* Header buttons & controls */
+      .agy-shell header button,
+      .agy-shell header span,
+      .agy-shell header svg {
+        color: #f8fafc !important;
+      }
+
+      /* Global muted text across the workspace */
+      .agy-shell .text-muted-foreground,
+      .agy-shell .text-secondary-foreground,
+      .agy-shell [class*="text-muted"],
+      .agy-shell [class*="text-zinc-500"],
+      .agy-shell [class*="text-gray-500"],
+      .agy-shell [class*="text-zinc-400"] {
+        color: #cbd5e1 !important;
       }
       .agy-shell [data-testid="agent-response"] .md-table-bleed,
       .agy-shell [data-testid="agent-response"] .md-table-host {
@@ -2818,11 +3077,403 @@
         }
       }
 
+      /* Settings modal backdrop */
+      .settings-modal-backdrop {
+        background: rgba(8, 6, 14, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+      }
+
+      /* Settings modal outer window */
       .settings-modal-container {
-        background: ${modalBg} !important;
-        border: 1px solid ${mainTheme.borderColor} !important;
-        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.75), 0 0 24px ${mainTheme.glow} !important;
+        background: linear-gradient(145deg, rgba(22, 16, 36, 0.96) 0%, rgba(12, 10, 24, 0.98) 100%) !important;
+        border: 1px solid ${mainTheme.borderColor || 'rgba(251, 113, 133, 0.45)'} !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.85), 0 0 28px ${mainTheme.glow || 'rgba(251, 113, 133, 0.22)'} !important;
+        color: #f8fafc !important;
         backdrop-filter: none !important;
+      }
+
+      /* All background layers inside settings modal */
+      .settings-modal-container .bg-background,
+      .settings-modal-container div[class*="bg-background"],
+      .settings-modal-container .h-full.w-full {
+        background: transparent !important;
+        color: #f8fafc !important;
+      }
+
+      /* Left sidebar of settings */
+      .settings-modal-container [data-split-root] > div:first-child,
+      .settings-modal-container aside,
+      .settings-modal-container nav {
+        background: rgba(14, 10, 22, 0.65) !important;
+        border-right: 1px solid rgba(251, 113, 133, 0.22) !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+      }
+
+      /* Left sidebar headers (Settings, Projects, Not in Project) */
+      .settings-modal-container [data-split-root] > div:first-child h2,
+      .settings-modal-container [data-split-root] > div:first-child h3,
+      .settings-modal-container [data-split-root] > div:first-child [class*="text-xs"],
+      .settings-modal-container [data-split-root] > div:first-child [class*="text-muted-foreground"] {
+        color: #fda4af !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+        padding-left: 8px !important;
+        margin-top: 10px !important;
+        margin-bottom: 4px !important;
+        opacity: 0.85 !important;
+      }
+
+      /* Left sidebar navigation items: sleek transparent default look */
+      .settings-modal-container [data-split-root] > div:first-child button,
+      .settings-modal-container [data-split-root] > div:first-child div[role="button"],
+      .settings-modal-container button[data-testid*="settings-nav-item"] {
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 8px !important;
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        font-size: 13.5px !important;
+        padding: 6px 12px !important;
+        box-shadow: none !important;
+        transition: all 0.15s ease !important;
+      }
+
+      .settings-modal-container [data-split-root] > div:first-child button:hover,
+      .settings-modal-container [data-split-root] > div:first-child div[role="button"]:hover,
+      .settings-modal-container button[data-testid*="settings-nav-item"]:hover {
+        background: rgba(251, 113, 133, 0.10) !important;
+        border-color: rgba(251, 113, 133, 0.20) !important;
+        color: #ffffff !important;
+      }
+
+      /* Active/Selected sidebar item (General, Appearance, etc.) */
+      .settings-modal-container [data-split-root] > div:first-child button.bg-sidebar-secondary,
+      .settings-modal-container button[data-testid*="settings-nav-item"].bg-sidebar-secondary,
+      .settings-modal-container [data-split-root] > div:first-child button[data-state="active"],
+      .settings-modal-container [data-split-root] > div:first-child button[aria-selected="true"],
+      .settings-modal-container button[data-testid*="settings-nav-item"][aria-selected="true"],
+      .settings-modal-container button[data-testid*="settings-nav-item"][data-state="active"] {
+        background: linear-gradient(90deg, rgba(251, 113, 133, 0.28) 0%, rgba(251, 113, 133, 0.08) 100%) !important;
+        border: 1px solid rgba(251, 113, 133, 0.5) !important;
+        border-left: 3.5px solid #fb7185 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 14px rgba(251, 113, 133, 0.25) !important;
+      }
+
+      /* Interface layout cards: Default (Unselected) */
+      .settings-modal-container span.rounded-xl.border:not([class*="border-primary"]):not([class*="ring-primary"]),
+      .settings-modal-container [data-testid*="mode-option"]:not([class*="border-primary"]) {
+        background: rgba(18, 14, 28, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #94a3b8 !important;
+        opacity: 0.7 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
+      }
+
+      .settings-modal-container span.rounded-xl.border:not([class*="border-primary"]):hover,
+      .settings-modal-container [data-testid*="mode-option"]:not([class*="border-primary"]):hover {
+        background: rgba(251, 113, 133, 0.06) !important;
+        border-color: rgba(251, 113, 133, 0.3) !important;
+        color: #e2e8f0 !important;
+        opacity: 0.95 !important;
+      }
+
+      /* Interface layout cards: ACTIVE / SELECTED (Software Engineering) */
+      .settings-modal-container span.rounded-xl.border[class*="border-primary"],
+      .settings-modal-container span.rounded-xl.border[class*="ring-primary"],
+      .settings-modal-container [data-testid*="mode-option"][class*="border-primary"] {
+        background: linear-gradient(135deg, rgba(251, 113, 133, 0.22) 0%, rgba(30, 18, 44, 0.8) 100%) !important;
+        border: 1.5px solid #fb7185 !important;
+        box-shadow: 0 0 20px rgba(251, 113, 133, 0.35), inset 0 0 12px rgba(251, 113, 133, 0.15) !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+      }
+      .settings-modal-container span.rounded-xl.border[class*="border-primary"] svg,
+      .settings-modal-container span.rounded-xl.border[class*="border-primary"] [class*="font-"] {
+        color: #fb7185 !important;
+      }
+
+      /* Segmented Toggle Groups (Queue vs Send Immediately, Enter vs Ctrl+Enter, Default vs Strong, Verbose) */
+      .settings-modal-container [data-slot="toggle-group"] {
+        background: rgba(10, 8, 18, 0.9) !important;
+        border: 1px solid rgba(251, 113, 133, 0.3) !important;
+        border-radius: 8px !important;
+        padding: 3px !important;
+        display: inline-flex !important;
+        gap: 3px !important;
+      }
+
+      /* Unselected button in toggle group */
+      .settings-modal-container [data-slot="toggle-group"] button[aria-pressed="false"],
+      .settings-modal-container [data-slot="toggle-group"] button:not([data-pressed]) {
+        background: transparent !important;
+        border: none !important;
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+        padding: 4px 12px !important;
+        opacity: 0.75 !important;
+      }
+      .settings-modal-container [data-slot="toggle-group"] button[aria-pressed="false"]:hover {
+        background: rgba(255, 255, 255, 0.06) !important;
+        color: #f1f5f9 !important;
+        opacity: 1 !important;
+      }
+
+      /* ACTIVE / PRESSED button in toggle group (Def vs Strong crystal clear!) */
+      .settings-modal-container [data-slot="toggle-group"] button[aria-pressed="true"],
+      .settings-modal-container [data-slot="toggle-group"] button[data-pressed] {
+        background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%) !important;
+        border: none !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: 0 0 14px rgba(251, 113, 133, 0.65), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+        border-radius: 6px !important;
+        padding: 4px 12px !important;
+        opacity: 1 !important;
+      }
+      .settings-modal-container [data-slot="toggle-group"] button[aria-pressed="true"] svg {
+        color: #ffffff !important;
+      }
+
+      /* Toggle switch (track) */
+      .settings-modal-container button[role="switch"] {
+        padding: 0 !important;
+        height: 24px !important;
+        width: 44px !important;
+        min-width: 44px !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        outline: none !important;
+        background: rgba(30, 22, 44, 0.8) !important;
+        border-radius: 9999px !important;
+        box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.35), inset 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+        transition: background 0.2s ease, box-shadow 0.2s ease !important;
+      }
+
+      /* Toggle switch ON */
+      .settings-modal-container button[role="switch"][aria-checked="true"],
+      .settings-modal-container button[role="switch"][data-state="checked"],
+      .settings-modal-container button[role="switch"].bg-primary {
+        border: none !important;
+        outline: none !important;
+        background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%) !important;
+        box-shadow: 0 0 10px rgba(251, 113, 133, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+      }
+
+      /* Toggle switch thumb circle */
+      .settings-modal-container button[role="switch"] span {
+        height: 16px !important;
+        width: 16px !important;
+        border-radius: 50% !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Modal Close button (X) and Top Icon buttons */
+      .settings-modal-container button[class*="agy-button-icon-lg"],
+      .settings-modal-container button[aria-label="Close"],
+      .settings-modal-container button[aria-label="Refresh"],
+      .settings-modal-container button.top-4.right-4 {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #fda4af !important;
+        transition: all 0.15s ease !important;
+      }
+      .settings-modal-container button[class*="agy-button-icon-lg"]:hover,
+      .settings-modal-container button[aria-label="Close"]:hover,
+      .settings-modal-container button[aria-label="Refresh"]:hover,
+      .settings-modal-container button.top-4.right-4:hover {
+        background: rgba(251, 113, 133, 0.18) !important;
+        color: #fbbf24 !important;
+      }
+      .settings-modal-container button[class*="agy-button-icon-lg"] svg,
+      .settings-modal-container button[aria-label="Close"] svg,
+      .settings-modal-container button[aria-label="Refresh"] svg,
+      .settings-modal-container button.top-4.right-4 svg {
+        color: inherit !important;
+        fill: currentColor !important;
+      }
+
+      /* Shortcut action buttons (Trash can remove, plus add) */
+      .settings-modal-container [data-testid*="shortcut-row"] button[class*="agy-button-icon"],
+      .settings-modal-container button[aria-label*="Remove shortcut"],
+      .settings-modal-container button[aria-label*="Add shortcut"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        border-radius: 4px !important;
+        color: rgba(251, 113, 133, 0.8) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.15s ease !important;
+      }
+      .settings-modal-container [data-testid*="shortcut-row"] button[class*="agy-button-icon"]:hover,
+      .settings-modal-container button[aria-label*="Remove shortcut"]:hover,
+      .settings-modal-container button[aria-label*="Add shortcut"]:hover {
+        background: rgba(251, 113, 133, 0.2) !important;
+        color: #fbbf24 !important;
+      }
+      .settings-modal-container [data-testid*="shortcut-row"] button[class*="agy-button-icon"] svg,
+      .settings-modal-container button[aria-label*="Remove shortcut"] svg,
+      .settings-modal-container button[aria-label*="Add shortcut"] svg {
+        color: inherit !important;
+        fill: currentColor !important;
+        width: 15px !important;
+        height: 15px !important;
+      }
+
+      /* Shortcut keycap buttons (Ctrl+K, Ctrl+W, Ctrl+Shift+T, etc.) */
+      .settings-modal-container button.agy-button-xs,
+      .settings-modal-container button[aria-label*="Shortcut "] {
+        background: rgba(22, 16, 32, 0.85) !important;
+        border: 1px solid rgba(251, 113, 133, 0.35) !important;
+        border-radius: 6px !important;
+        color: #f8fafc !important;
+        padding: 2px 8px !important;
+        height: 24px !important;
+        width: auto !important;
+        min-width: unset !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 500 !important;
+      }
+      .settings-modal-container button.agy-button-xs:hover,
+      .settings-modal-container button[aria-label*="Shortcut "]:hover {
+        border-color: #fbbf24 !important;
+        background: rgba(251, 113, 133, 0.2) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 8px rgba(251, 191, 36, 0.25) !important;
+      }
+
+      /* Color picker swatch button in Appearance */
+      .settings-modal-container button[aria-label*="color picker"],
+      .settings-modal-container button[aria-label*="Color picker"] {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        padding: 0 !important;
+        border-radius: 4px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.7) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+      }
+
+      /* Text action buttons (Open, Change, Upgrade, etc.) */
+      .settings-modal-container button:not([data-testid*="settings-nav-item"]):not([data-slot="toggle-group"] button):not([role="switch"]):not([class*="agy-button-icon"]):not([aria-label="Close"]):not([aria-label*="Refresh"]):not([aria-label*="shortcut"]):not([aria-label*="Shortcut"]):not([aria-label*="color picker"]):not([aria-label*="Color picker"]):not(.h-6.w-6):not(.h-7.w-7) {
+        background: rgba(30, 20, 44, 0.7) !important;
+        border: 1px solid rgba(251, 113, 133, 0.35) !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        padding: 5px 14px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .settings-modal-container button:not([data-testid*="settings-nav-item"]):not([data-slot="toggle-group"] button):not([role="switch"]):not([class*="agy-button-icon"]):not([aria-label="Close"]):not([aria-label*="Refresh"]):not([aria-label*="shortcut"]):not([aria-label*="Shortcut"]):not([aria-label*="color picker"]):not([aria-label*="Color picker"]):not(.h-6.w-6):not(.h-7.w-7):hover {
+        background: rgba(251, 113, 133, 0.25) !important;
+        border-color: #fbbf24 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 12px rgba(251, 191, 36, 0.3) !important;
+      }
+
+      /* Primary prominent buttons (Upgrade, Get More AI Credits) */
+      .settings-modal-container button.bg-primary,
+      .settings-modal-container button[class*="bg-primary"]:not([role="switch"]) {
+        background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%) !important;
+        border: 1px solid #fb7185 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 0 14px rgba(251, 113, 133, 0.45) !important;
+      }
+
+      /* Select dropdowns and comboboxes */
+      .settings-modal-container select,
+      .settings-modal-container button[role="combobox"],
+      .settings-modal-container [class*="select-trigger"] {
+        background: rgba(20, 14, 32, 0.75) !important;
+        border: 1px solid rgba(251, 113, 133, 0.35) !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        font-weight: 500 !important;
+      }
+
+      /* Inputs in settings modal (search shortcuts, hex color inputs, etc.) */
+      .settings-modal-container input[type="text"],
+      .settings-modal-container input[type="search"],
+      .settings-modal-container input.bg-muted,
+      .settings-modal-container input.uppercase {
+        --foreground: 255 255 255 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background: rgba(22, 16, 32, 0.85) !important;
+        border: 1px solid rgba(251, 113, 133, 0.35) !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+      }
+      .settings-modal-container input[type="text"]:focus,
+      .settings-modal-container input[type="search"]:focus,
+      .settings-modal-container input.uppercase:focus {
+        border-color: #fb7185 !important;
+        box-shadow: 0 0 8px rgba(251, 113, 133, 0.35) !important;
+      }
+
+      /* Close button X & all icons inside modal */
+      .settings-modal-container button[aria-label*="Close"],
+      .settings-modal-container [class*="close"] svg,
+      .settings-modal-container svg {
+        color: ${mainTheme.primary || '#fb7185'} !important;
+      }
+
+      /* Text, headings, and labels */
+      .settings-modal-container h1,
+      .settings-modal-container h2,
+      .settings-modal-container h3,
+      .settings-modal-container h4,
+      .settings-modal-container span,
+      .settings-modal-container p,
+      .settings-modal-container label,
+      .settings-modal-container div {
+        color: #f8fafc !important;
+      }
+
+      .settings-modal-container [class*="text-muted"],
+      .settings-modal-container [class*="text-secondary"],
+      .settings-modal-container p {
+        color: #cbd5e1 !important;
+      }
+
+      .settings-modal-container [class*="border-border"],
+      .settings-modal-container [class*="divide-border"] > * + * {
+        border-color: rgba(251, 113, 133, 0.22) !important;
+      }
+
+      /* Sliders and ranges */
+      .settings-modal-container input[type="range"] {
+        accent-color: ${mainTheme.primary || '#fb7185'} !important;
       }
 
       #agy-custom-theme-modal-dialog {
@@ -2979,10 +3630,25 @@
     applyTheme();
     mountBootSequence(false);
   }
-  if (document.body && document.head) {
-    bootstrapEngineDom();
-  } else {
-    document.addEventListener('DOMContentLoaded', bootstrapEngineDom, { once: true });
+
+  // 1. Instant execution at document_start to prevent any white flash or unthemed UI
+  if (typeof document !== 'undefined' && document.documentElement) {
+    try {
+      bootstrapEngineDom();
+    } catch (e) {
+      console.warn('[ThemeMod] Early bootstrap attempt:', e);
+    }
+  }
+
+  // 2. Full re-bind once DOM is completely interactive/loaded
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        applyTheme();
+      }, { once: true });
+    } else {
+      applyTheme();
+    }
   }
 
   function openCustomThemeModal() {
@@ -3105,7 +3771,7 @@
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <button id="agy-custom-vg-toggle" type="button" style="padding: 4px 10px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid ${mainTheme.borderColor}; color: #e4e4e7; font-size: 11.5px; cursor: pointer;">
-                Tùy chỉnh Voice &amp; Câu chào ▾
+                Tùy chỉnh Tên, Voice &amp; Câu chào ▾
               </button>
               <button id="agy-replay-boot-btn" type="button" style="padding: 4px 10px; border-radius: 7px; background: rgba(255,255,255,0.08); border: 1px solid ${mainTheme.borderColor}; color: #e4e4e7; font-size: 11.5px; cursor: pointer;">
                 Replay Intro
@@ -3115,7 +3781,20 @@
               </button>
             </div>
           </div>
-          <div id="agy-custom-vg-box" style="display: none; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <div id="agy-custom-vg-box" style="display: none; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <span style="font-size: 12.5px; font-weight: 600; color: #f4f4f5;">Tên người dùng (Operator Name)</span>
+                <span id="agy-user-name-msg" style="font-size: 11px; color: #93c5fd;"></span>
+              </div>
+              <div style="font-size: 11px; color: #a1a1aa; line-height: 1.4;">
+                Tên hiển thị trên màn hình Boot HUD, thẻ danh tính và hệ thống (mặc định: OPERATOR).
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                <input id="agy-user-name-input" type="text" maxlength="32" placeholder="Nhập tên của bạn..." value="${escapeHtml(st.userName || '')}" style="flex: 1; background: rgba(0,0,0,0.38); color: #f4f4f5; border: 1px solid ${mainTheme.borderColor}; border-radius: 7px; padding: 6px 10px; font-size: 12px; outline: none;" />
+                <button id="agy-user-name-save" type="button" style="padding: 6px 14px; border-radius: 7px; background: ${mainTheme.primary}; color: #090d16; font-weight: 600; font-size: 11.5px; border: none; cursor: pointer; white-space: nowrap;">Lưu tên</button>
+              </div>
+            </div>
             <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 12.5px; font-weight: 600; color: #f4f4f5;">Voice báo xong Task (Random)</span>
@@ -3623,7 +4302,7 @@
             throw new Error('Config must be a JSON object');
           }
           const allowed = {};
-          const keys = ['themeName', 'bubbleName', 'inputStyle', 'dimming', 'wpEnabled', 'wpMode', 'customWp', 'customVideo', 'savedImages', 'savedVideos', 'taskVoices', 'taskVoiceEnabled', 'taskVoiceVol', 'customGreetings', 'userAvatar', 'agentAvatar', 'glassBlur', 'avatarSize', 'avatarRadius', 'bootIntro', 'sketchReveal', 'tawaGreeting'];
+          const keys = ['themeName', 'bubbleName', 'inputStyle', 'dimming', 'wpEnabled', 'wpMode', 'customWp', 'customVideo', 'savedImages', 'savedVideos', 'taskVoices', 'taskVoiceEnabled', 'taskVoiceVol', 'customGreetings', 'userAvatar', 'agentAvatar', 'glassBlur', 'avatarSize', 'avatarRadius', 'bootIntro', 'sketchReveal', 'tawaGreeting', 'userName'];
           keys.forEach((k) => {
             if (parsed[k] !== undefined) allowed[k] = parsed[k];
           });
@@ -3656,6 +4335,7 @@
       localStorage.removeItem(STORAGE_TASK_VOICE_ENABLED);
       localStorage.removeItem(STORAGE_TASK_VOICE_VOL);
       localStorage.removeItem(STORAGE_CUSTOM_GREETINGS);
+      localStorage.removeItem(STORAGE_USER_NAME);
       const defTh = THEMES[DEFAULT_THEME_KEY] || {};
       const defMode = defTh.wallpaperVideo ? 'video' : 'image';
       applyTheme({
@@ -3668,6 +4348,7 @@
         customWp: '',
         customVideo: '',
         taskVoiceEnabled: true,
+        userName: 'OPERATOR',
         taskVoiceVol: 85,
         customGreetings: [],
         userAvatar: '',
@@ -3817,7 +4498,30 @@
       customVgToggle.addEventListener('click', () => {
         const isHidden = customVgBox.style.display === 'none';
         customVgBox.style.display = isHidden ? 'grid' : 'none';
-        customVgToggle.textContent = isHidden ? 'Tùy chỉnh Voice & Câu chào ▴' : 'Tùy chỉnh Voice & Câu chào ▾';
+        customVgToggle.textContent = isHidden ? 'Tùy chỉnh Tên, Voice & Câu chào ▴' : 'Tùy chỉnh Tên, Voice & Câu chào ▾';
+      });
+    }
+    const userNameInput = container.querySelector('#agy-user-name-input');
+    const userNameSaveBtn = container.querySelector('#agy-user-name-save');
+    const userNameMsgEl = container.querySelector('#agy-user-name-msg');
+
+    function saveUserName() {
+      if (!userNameInput) return;
+      const val = userNameInput.value.trim() || 'OPERATOR';
+      applyTheme({ userName: val });
+      if (userNameMsgEl) {
+        userNameMsgEl.textContent = 'Đã lưu tên!';
+        setTimeout(() => { if (userNameMsgEl) userNameMsgEl.textContent = ''; }, 2200);
+      }
+    }
+
+    if (userNameSaveBtn) userNameSaveBtn.addEventListener('click', saveUserName);
+    if (userNameInput) {
+      userNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveUserName();
+        }
       });
     }
     if (greetingSaveBtn && greetingLinesEl) {
@@ -4374,42 +5078,8 @@
   window.__ANTIGRAVITY_TEST_TASK_VOICE__ = () => playRandomTaskVoice(true);
 
   function syncTaskCompletionVoice() {
-    if (location.href !== taskVoiceState.lastUrl) {
-      taskVoiceState.lastUrl = location.href;
-      taskVoiceState.urlChangedAt = Date.now();
-      taskVoiceState.wasRunning = false;
-      if (window.__AGY_TASK_COMPLETE_TIMER__) {
-        clearTimeout(window.__AGY_TASK_COMPLETE_TIMER__);
-        window.__AGY_TASK_COMPLETE_TIMER__ = null;
-      }
-      return;
-    }
-    const shell = findActiveShell();
-    if (!shell) return;
-    const isRunning = Boolean(shell.querySelector('[data-testid="input-cancel-button"]'));
-    if (isRunning) {
-      if (window.__AGY_TASK_COMPLETE_TIMER__) {
-        clearTimeout(window.__AGY_TASK_COMPLETE_TIMER__);
-        window.__AGY_TASK_COMPLETE_TIMER__ = null;
-      }
-      taskVoiceState.wasRunning = true;
-      return;
-    }
-    if (!taskVoiceState.wasRunning || window.__AGY_TASK_COMPLETE_TIMER__) return;
-    window.__AGY_TASK_COMPLETE_TIMER__ = setTimeout(() => {
-      window.__AGY_TASK_COMPLETE_TIMER__ = null;
-      const curShell = findActiveShell();
-      if (!curShell || curShell.querySelector('[data-testid="input-cancel-button"]')) {
-        return;
-      }
-      taskVoiceState.wasRunning = false;
-      const now = Date.now();
-      if (location.href !== taskVoiceState.lastUrl) return;
-      if (now - taskVoiceState.urlChangedAt < 1200) return;
-      if (now - taskVoiceState.userCancelledAt < 1800) return;
-      if (!curShell.querySelector('[data-testid="agent-response"]')) return;
-      playRandomTaskVoice(false);
-    }, 450);
+    // Disabled per user request: delete all AI voice playback while inside
+    return;
   }
 
   function tick() {

@@ -577,6 +577,9 @@ function createSession(target) {
     }
 
     session.reinject = async () => {
+        try {
+            await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 1 } });
+        } catch (_) {}
         const src = buildInjectedSource();
         if (!src) return;
         try {
@@ -624,6 +627,9 @@ function createSession(target) {
         try {
             await send('Page.enable');
             await send('Runtime.enable');
+            try {
+                await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 1 } });
+            } catch (_) {}
             try {
                 await send('Page.setBypassCSP', { enabled: true });
             } catch (_) {}
@@ -748,6 +754,6 @@ const readyWait = setInterval(() => {
         clearInterval(readyWait);
         watchPayload();
         scanPages();
-        setInterval(scanPages, 1500);
+        setInterval(scanPages, 300);
     }
 }, 25);

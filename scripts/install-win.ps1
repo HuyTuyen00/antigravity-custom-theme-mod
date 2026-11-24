@@ -14,26 +14,46 @@ $VbsPath = Join-Path $RepoRoot 'silent-start.vbs'
 
 $NodeCmd = Get-Command node -ErrorAction SilentlyContinue
 if (-not $NodeCmd) {
-    Write-Error "Node.js not found in PATH. Install Node.js >= 22 first."
+    $CommonNodePaths = @(
+        'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VisualStudio\NodeJs\node.exe',
+        'C:\Program Files\nodejs\node.exe',
+        'C:\Program Files (x86)\nodejs\node.exe'
+    )
+    foreach ($p in $CommonNodePaths) {
+        if (Test-Path $p) {
+            $NodeExe = $p
+            break
+        }
+    }
+    if (-not $NodeExe) {
+        Write-Error "Node.js not found in PATH or standard paths. Install Node.js >= 22 first."
+    }
+} else {
+    $NodeExe = $NodeCmd.Source
 }
-$NodeExe = $NodeCmd.Source
 $NodeMajor = [int]((& $NodeExe -p "process.versions.node.split('.')[0]").Trim())
 if ($NodeMajor -lt 22) {
     Write-Error "Node.js >= 22 is required (found v$NodeMajor at $NodeExe)."
 }
 
 if (-not (Test-Path $PayloadJs)) {
-    $PyCmd = Get-Command python -ErrorAction SilentlyContinue
-    if (-not $PyCmd) {
-        $PyCmd = Get-Command python3 -ErrorAction SilentlyContinue
+    $BuildJs = Join-Path $RepoRoot 'scripts\build_payload.js'
+    if (Test-Path $BuildJs) {
+        Write-Host "[install-win] Building dist/theme_payload.js via Node..."
+        & $NodeExe $BuildJs
+    } else {
+        $PyCmd = Get-Command python -ErrorAction SilentlyContinue
+        if (-not $PyCmd) {
+            $PyCmd = Get-Command python3 -ErrorAction SilentlyContinue
+        }
+        if (-not $PyCmd) {
+            Write-Error "Neither build_payload.js nor Python was found to build dist/theme_payload.js."
+        }
+        Write-Host "[install-win] Building dist/theme_payload.js via Python..."
+        & $PyCmd.Source $BuildPy
     }
-    if (-not $PyCmd) {
-        Write-Error "dist/theme_payload.js is missing and Python was not found to build it."
-    }
-    Write-Host "[install-win] Building dist/theme_payload.js..."
-    & $PyCmd.Source $BuildPy
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "build_payload.py failed with exit code $LASTEXITCODE."
+        Write-Error "Payload build failed with exit code $LASTEXITCODE."
     }
 }
 
@@ -76,7 +96,17 @@ if (-not $NoStartup) {
 }
 
 Write-Host "[install-win] Launching daemon via wscript.exe..."
-Start-Process -FilePath 'wscript.exe' -ArgumentList """$VbsPath""" -WorkingDirectory $RepoRoot
+$launched = $false
+try {
+    $cimRes = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+        CommandLine = "wscript.exe `"$VbsPath`""
+        CurrentDirectory = $RepoRoot
+    }
+    if ($cimRes -and $cimRes.ReturnValue -eq 0) { $launched = $true }
+} catch {}
+if (-not $launched) {
+    Start-Process -FilePath 'wscript.exe' -ArgumentList """$VbsPath""" -WorkingDirectory $RepoRoot
+}
 
 for ($i = 0; $i -lt 15; $i++) {
     Start-Sleep -Milliseconds 250
