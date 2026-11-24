@@ -1,4 +1,4 @@
-# Antigravity Custom Theme & Boot Studio
+# Antigravity Custom Theme — Fusion Burst Edition
 
 Bộ công cụ tùy biến giao diện cao cấp cho **Google Antigravity**, hỗ trợ hình nền động (Live Video Wallpaper), hiệu ứng kính mờ (Frosted Glass), âm thanh chào mừng cùng màn hình khởi động phong cách khoa học viễn tưởng (Sci-Fi Boot HUD) — hoàn toàn không can thiệp hay sửa đổi tệp cài đặt gốc (`app.asar`) của ứng dụng.
 

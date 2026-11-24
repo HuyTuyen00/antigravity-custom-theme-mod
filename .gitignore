@@ -22,6 +22,7 @@ scripts/inspect_*
 scripts/open_settings_and_check.js
 scripts/reinject_now.js
 scripts/snap_*
+scripts/generate_*
 scripts/test_*
 *.wav
 

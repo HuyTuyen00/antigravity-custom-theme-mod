@@ -1682,7 +1682,7 @@
           <strong>ANTIGRAVITY</strong>
           <span class="sub-line">FUSION BURST</span>
           <div class="agy-boot-rev">
-            <span>${upperUser} EDITION</span>
+            <span>FUSION BURST EDITION</span>
           </div>
         </div>
         <button class="agy-boot-skip" id="agy-boot-skip" type="button">SKIP ▸</button>
