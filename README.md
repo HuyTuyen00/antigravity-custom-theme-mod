@@ -2,7 +2,13 @@
 
 Bộ công cụ tùy biến giao diện cao cấp cho **Google Antigravity**, hỗ trợ hình nền động (Live Video Wallpaper), hiệu ứng kính mờ (Frosted Glass), âm thanh chào mừng cùng màn hình khởi động phong cách khoa học viễn tưởng (Sci-Fi Boot HUD) — hoàn toàn không can thiệp hay sửa đổi tệp cài đặt gốc (`app.asar`) của ứng dụng.
 
-![Minh họa giao diện Antigravity Custom Theme](docs/demo.webp)
+<p align="center">
+  <img src="docs/workspace.webp" alt="Giao diện chính Antigravity Fusion Burst Edition" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/settings.webp" alt="Bảng điều khiển Custom Theme Studio" width="100%" />
+</p>
 
 ---
 
