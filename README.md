@@ -17,7 +17,7 @@ Bộ công cụ tùy biến giao diện cao cấp cho **Google Antigravity**, h�
 - 🚀 **Khởi động tức thì (Zero-Flash Dark Boot):** Triệt tiêu hoàn toàn hiện tượng chớp trắng (white flash) khi mở ứng dụng nhờ đồng bộ màu canvas CDP và kỹ thuật chèn màn che tối ngay tại `document_start`.
 - 👤 **Tùy biến tên định danh (Custom Operator Name):** Dễ dàng thay đổi tên hiển thị trên màn hình khởi động (Boot HUD) và thẻ định danh hệ thống trực tiếp trong bảng cài đặt.
 - 🎨 **Bộ sưu tập Preset độc đáo:**
-  - **WuWa Fusion Burst**: Tông màu hoa anh đào rực rỡ và ánh lửa hổ phách (Changli, Encore & Danjin).
+  - **WuWa Fusion Burst**: Tông màu hoa anh đào rực rỡ và ánh lửa hổ phách (Aemeath , Denia , Chisa).
   - **Gemini-chan Live**: Không gian tuyết tím kỳ ảo kèm video nền động mượt mà.
   - **Furina Live**: Nhịp điệu Thủy Quốc trang nhã, lung linh.
   - **WLOP Cosmic**: Bầu trời sao kỳ vĩ, huyền bí.
